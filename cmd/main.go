@@ -11,6 +11,7 @@ import (
 	"github.com/dedihartono801/order-svc/pkg/service"
 	pb "github.com/dedihartono801/protobuf/order/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 func main() {
@@ -41,7 +42,23 @@ func main() {
 		ProductSvc: productSvc,
 	}
 
-	grpcServer := grpc.NewServer()
+	opts := []grpc.ServerOption{}
+	tls := true
+
+	if tls {
+		certFile := "ssl/order-svc/server.crt"
+		kefFile := "ssl/order-svc/server.pem"
+
+		creds, err := credentials.NewServerTLSFromFile(certFile, kefFile)
+
+		if err != nil {
+			log.Fatalf("Failed loading certificates: %v\n", err)
+		}
+
+		opts = append(opts, grpc.Creds(creds))
+	}
+
+	grpcServer := grpc.NewServer(opts...)
 
 	pb.RegisterOrderServiceServer(grpcServer, &s)
 
